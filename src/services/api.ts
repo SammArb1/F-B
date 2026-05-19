@@ -158,6 +158,21 @@ export async function apiLeaveParche(
   }
 }
 
+export async function fetchUsers(): Promise<ApiResult<User[]>> {
+    try {
+        const data = await fetchClient('/auth/users');
+        return success(data.map((u: any) => ({
+            id: u.id,
+            fullName: u.fullName,
+            email: u.email,
+            major: u.major,
+            avatarUrl: u.avatarUrl
+        })));
+    } catch (err: any) {
+        return fail(err.message, 'VALIDATION');
+    }
+}
+
 export async function fetchMyParches(): Promise<ApiResult<Parche[]>> {
     try {
         const data = await fetchClient('/parche/my-parches');
@@ -359,21 +374,38 @@ export async function apiCheckIn(
   }
 }
 
-// Estos no los implementamos en backend aún, por simplicidad los simulamos como exitosos para no romper la app
 export async function apiSetMemberRole(
   store: StoreAccessor,
   parcheId: string,
   targetUserId: string,
   role: ParcheRole
 ): Promise<ApiResult<boolean>> {
-    return success(true);
+    try {
+        await fetchClient(`/parche/${parcheId}/member/${targetUserId}/role`, {
+            method: 'PATCH',
+            body: JSON.stringify({ role })
+        });
+        await store.refreshData();
+        return success(true);
+    } catch (err: any) {
+        return fail(err.message, 'VALIDATION');
+    }
 }
+
 export async function apiRemoveMember(
   store: StoreAccessor,
   parcheId: string,
   targetUserId: string
 ): Promise<ApiResult<boolean>> {
-    return success(true);
+    try {
+        await fetchClient(`/parche/${parcheId}/member/${targetUserId}`, {
+            method: 'DELETE'
+        });
+        await store.refreshData();
+        return success(true);
+    } catch (err: any) {
+        return fail(err.message, 'VALIDATION');
+    }
 }
 export async function apiUpdateProfile(
   store: StoreAccessor,

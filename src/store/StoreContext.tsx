@@ -20,6 +20,7 @@ import {
     apiRemoveMember as doApiRemoveMember,
     apiUpdateProfile as doApiUpdateProfile
 } from '../services/api';
+import * as api from '../services/api';
 
 interface StoreContextType {
     // Auth
@@ -86,16 +87,16 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     const [attendances, setAttendances] = useState<Attendance[]>([]);
     
     const [currentUser, setCurrentUser] = useState<User | null>(() => {
-        const raw = localStorage.getItem('pp_currentUser');
+        const raw = sessionStorage.getItem('pp_currentUser');
         return raw ? JSON.parse(raw) : null;
     });
 
     useEffect(() => {
         if (currentUser) {
-            localStorage.setItem('pp_currentUser', JSON.stringify(currentUser));
+            sessionStorage.setItem('pp_currentUser', JSON.stringify(currentUser));
             refreshData();
         } else {
-            localStorage.removeItem('pp_currentUser');
+            sessionStorage.removeItem('pp_currentUser');
             setParches([]);
             setPlans([]);
             setVotes([]);
@@ -106,6 +107,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     const refreshData = useCallback(async () => {
         if (!currentUser) return;
         try {
+            // 0. Fetch Users
+            const uRes = await api.fetchUsers();
+            if (uRes.ok) setUsers(uRes.data);
+
             // 1. Fetch Parches
             const pRes = await fetchMyParches();
             if (pRes.ok) {
