@@ -109,7 +109,13 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         try {
             // 0. Fetch Users
             const uRes = await api.fetchUsers();
-            if (uRes.ok) setUsers(uRes.data);
+            if (uRes.ok) {
+                setUsers(uRes.data);
+                const dbUser = uRes.data.find(u => u.id === currentUser.id);
+                if (dbUser && dbUser.fullName !== currentUser.fullName) {
+                    setCurrentUser(prev => prev ? { ...prev, fullName: dbUser.fullName, major: dbUser.major, avatarUrl: dbUser.avatarUrl } : prev);
+                }
+            }
 
             // 1. Fetch Parches
             const pRes = await fetchMyParches();
@@ -245,6 +251,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         const parcherPlans = plans.filter(p => p.parcheId === parcheId);
 
         return parcheMembers.map(member => {
+            const user = users.find(u => u.id === member.userId) || { fullName: 'User', avatarUrl: '' };
             const createdPlans = parcherPlans.filter(p => p.createdBy === member.userId);
             const scheduledPlans = createdPlans.filter(p => p.state === 'SCHEDULED');
             const organizerScore = createdPlans.length + scheduledPlans.length * 2;
@@ -254,13 +261,13 @@ export function StoreProvider({ children }: { children: ReactNode }) {
             ).length;
             return {
                 userId: member.userId,
-                fullName: 'User',
-                avatarUrl: '',
+                fullName: user.fullName,
+                avatarUrl: user.avatarUrl || '',
                 organizerScore,
                 ghostScore,
             };
         });
-    }, [parches, plans, attendances]);
+    }, [parches, plans, attendances, users]);
 
     const value: StoreContextType = {
         currentUser, login, register, logout, updateProfile,
