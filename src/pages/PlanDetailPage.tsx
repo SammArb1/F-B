@@ -61,7 +61,7 @@ export default function PlanDetailPage() {
     const formatDate = (iso: string) => {
         if (!iso) return 'Fecha por definir';
         const d = new Date(iso);
-        if (isNaN(d.getTime())) return 'Fecha inválida';
+        if (isNaN(d.getTime())) return String(iso);
         return d.toLocaleDateString('es-CO', { weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
     };
 
